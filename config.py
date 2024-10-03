@@ -5,4 +5,10 @@ DEPARTMENTS = {}  # Словарь начальников и их подчине
 MANAGERS = [883312525]  # ID начальников
 REMINDERS = {
     883312525: ["Подготовить презентацию", "Звонок с клиентом в 15:00"],
-} 
+}
+
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASSWORD = "556998"
+DB_NAME = "tgbot"
+DB_PORT = 3306
