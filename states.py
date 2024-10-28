@@ -22,3 +22,9 @@ class AddReminderState(StatesGroup):
     waiting_for_text = State()
     waiting_for_date = State()
     waiting_for_importance = State()
+
+class AddReminderEmployeeState(StatesGroup):
+    waiting_for_employee_text = State()
+    waiting_for_employee_date = State()
+    waiting_for_employee_importance = State()
+    

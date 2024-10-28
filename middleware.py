@@ -1,5 +1,5 @@
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject
+from aiogram.types import TelegramObject, Message
 from aiogram import Bot
 
 class BotMiddleware(BaseMiddleware):
@@ -21,6 +21,21 @@ class DatabaseMiddleware(BaseMiddleware):
     async def __call__(self, handler, event: TelegramObject, data: dict):
         # Добавляем объект базы данных в данные хендлера
         data['db'] = self.db
+        return await handler(event, data)
+    
+class AuthMiddleware(BaseMiddleware):
+    def __init__(self, db):
+        super().__init__()
+        self.db = db
+
+    async def __call__(self, handler, event: Message, data):
+        user_id = event.from_user.id
+        user = await self.db.fetchone("SELECT * FROM Users WHERE user_id = %s", (user_id,))
+        
+        if user is None and event.text not in ["Вход", "Регистрация", "/start"]:
+            await event.answer("Пожалуйста, авторизуйтесь или зарегистрируйтесь, чтобы продолжить.")
+            return  # Блокируем доступ
+        
         return await handler(event, data)
 
 

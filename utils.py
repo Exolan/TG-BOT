@@ -1,6 +1,52 @@
 from db import Database
 from aiogram import Bot
 from aiogram.types import Message
+from datetime import datetime
+from emoji import emojize
+import config
+
+async def send_message_date(bot: Bot, db: Database):
+    """Отправляет сообщения пользователям, если текущая дата совпадает с датой задачи."""
+    try:
+        # Получаем текущую дату
+        current_date = datetime.now().date()
+        
+        # Получаем задачи на текущую дату
+        tasks = await db.fetchall(
+            """
+            SELECT t.task_name, t.task_date, t.task_importance, t.task_from_admin, u.user_id, u.user_fio
+            FROM Tasks t
+            JOIN Users u ON t.task_user = u.user_id
+            WHERE t.task_date = %s
+            """,
+            (current_date,)
+        )
+        
+        # Отправляем напоминания пользователям
+        for task in tasks:
+            user_id = task['user_id']
+            task_description = f"{task['task_name']} (Важность: {task['task_importance']})"
+
+            # Отправляем сообщение пользователю
+            await bot.send_message(user_id, task_description)
+
+            # Если задача от администратора, отправляем в групповой чат
+            if task['task_from_admin']:
+                await bot.send_message(
+                    chat_id=config.ID_GROUP,  # ID вашего группового чата
+                    text=f"{task_description}. Исполнитель: {task['user_fio']}"
+                )
+                
+    except Exception as e:
+        print(f"Ошибка при отправке напоминаний: {e}")
+
+async def check_work(bot: Bot):
+    """Проверка работы бота и отправка сообщения администратору."""
+    try:
+        await bot.send_message(config.ID_GROUP, 'Бот работает!')
+    except Exception as e:
+        print(f"Ошибка при отправке сообщения о статусе бота: {e}")
+
 
 async def is_user_manager(user_id: int, db: Database) -> bool:
     """Проверяет, является ли пользователь начальником."""
@@ -12,7 +58,7 @@ async def is_user_manager(user_id: int, db: Database) -> bool:
         department_id = user['user_depart']
         
         # Проверяем, является ли данный отдел начальником
-        department = await db.fetchone("SELECT manager_password FROM Department WHERE depart_id = %s", (department_id,))
+        department = await db.fetchone("SELECT depart_name FROM Department WHERE depart_id = %s and depart_admin = %s", (department_id, user_id))
         
         if department:
             return True  # Пользователь является начальником

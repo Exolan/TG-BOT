@@ -1,14 +1,20 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-import config
+from utils import is_user_manager
 
-def main_keyboard():
+async def main_keyboard(user_id: int, db) -> ReplyKeyboardMarkup:
+    buttons = [
+        [
+            KeyboardButton(text="Напоминания"),
+            KeyboardButton(text="Помощь")
+        ]
+    ]
+
+    # Проверяем, является ли пользователь начальником отдела
+    if await is_user_manager(user_id, db):
+        buttons.append([KeyboardButton(text="Напоминания сотрудников")])
+
     return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(text="Напоминания"),
-                KeyboardButton(text="Помощь")
-            ]
-        ],
+        keyboard=buttons,
         resize_keyboard=True
     )
 
@@ -16,12 +22,9 @@ def reminders_keyboard(user_id):
     buttons = [
         [
             KeyboardButton(text="Добавить"),
+            KeyboardButton(text="Назад")
         ]
     ]
-    if user_id in config.MANAGERS:
-        buttons.append([KeyboardButton(text="Добавить сотруднику")])
-
-    buttons.append([KeyboardButton(text="Назад")])
 
     # Создаем клавиатуру с добавленными кнопками
     keyboard = ReplyKeyboardMarkup(
